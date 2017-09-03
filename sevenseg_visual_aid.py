@@ -5,6 +5,8 @@
 
 import datetime
 import fitbit
+import logging
+import serial
 import time
 import configparser
 
@@ -44,10 +46,12 @@ def get_steps(client):
     try:
         now = datetime.datetime.now()
         end_time = now.strftime("%H:%M")
-        response = client.intraday_time_series('activities/steps',
-                                               detail_level='15min',
-                                               start_time="00:00",
-                                               end_time=end_time)
+        response = client.intraday_time_series(
+            'activities/steps',
+            detail_level='15min',
+            start_time="00:00",
+            end_time=end_time
+        )
     except Exception as error:
         print(error)
     else:
@@ -64,39 +68,69 @@ def get_goal(client):
     """
         Determine Daily step goal
     """
-    num_steps = 0
+    goal_steps = 0
 
     try:
         response = client.activities_daily_goal()
     except Exception as error:
         print(error)
+    else:
+        str_goal = response['goals']['steps']
+        try:
+            goal_steps = int(str_goal)
+        except ValueError:
+            return -1
 
-    return response['goals']['steps']
+    return goal_steps
 
+
+def serial_write(serial_client, goal, steps):
+    """
+        Write steps to serial port
+    """
+    if steps > 0:
+        display_value = goal - steps
+        if display_value < 0:
+            display_value = 0
+        message = 'S' + str(display_value)
+        serial_client.write(b(message))
 
 if __name__ == "__main__":
+    logging.basicConfig(
+        filename='/home/pi/sevenseg_visualaid.log',
+        level=logging.DEBUG,
+        format='%(asctime)s %(message)s'
+    )
 
-    client = fitbit.Fitbit(CONSUMER_KEY,
-                           CONSUMER_SECRET,
-                           access_token=ACCESS_TOKEN,
-                           refresh_token=REFRESH_TOKEN,
-                           refresh_cb=update_tokens)
+    client = fitbit.Fitbit(
+        CONSUMER_KEY,
+        CONSUMER_SECRET,
+        access_token=ACCESS_TOKEN,
+        refresh_token=REFRESH_TOKEN,
+        refresh_cb=update_tokens
+    )
 
     current_time = time.time()
 
-    # retrieve steps
-    steps = get_steps(client)
-    denominator = int(get_goal(client) / 8)
-    num_leds = steps // denominator
+    with serial.Serial("/dev/ttyACM0", 9600, timeout=0.5) as serial_port:
+        # retrieve steps
+        steps = get_steps(client)
+        goal = get_goal(client)
+        serial_write(serial_port, goal, steps)
 
-    while True:
-        # update steps every 15 minutes
-        if (time.time() - current_time) > 900:
-            steps = get_steps(client)
-            print(steps)
-            # refresh LEDs only if step check was successful
-            if steps >= 0:
-                current_time = time.time()
-                num_leds = steps // denominator
-            else:
-                continue
+        logging.info("Goal: " + str(goal) + "Steps: " + str(steps))
+
+        while True:
+            # update steps every 15 minutes
+            if (time.time() - current_time) > 900:
+                steps = get_steps(client)
+                # refresh LEDs only if step check was successful
+                if steps >= 0:
+                    current_time = time.time()
+                    serial_write(serial_port, goal, steps)
+                    logging.info("Steps: " + str(steps))
+                else:
+                    continue
+
+            serial_write(serial_port, goal, steps)
+            time.sleep(1)
