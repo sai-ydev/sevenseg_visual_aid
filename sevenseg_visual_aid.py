@@ -82,7 +82,6 @@ if __name__ == "__main__":
                            refresh_token=REFRESH_TOKEN,
                            refresh_cb=update_tokens)
 
-    blinkt.set_brightness(0.1)
     current_time = time.time()
 
     # retrieve steps
