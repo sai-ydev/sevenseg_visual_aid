@@ -93,7 +93,7 @@ def serial_write(serial_client, goal, steps):
         if display_value < 0:
             display_value = 0
         message = 'S' + str(display_value)
-        serial_client.write(bytes(message))
+        serial_client.write(bytes(message, encoding='utf-8'))
 
 if __name__ == "__main__":
     logging.basicConfig(
