@@ -88,7 +88,7 @@ def serial_write(serial_client, goal, steps):
     """
         Write steps to serial port
     """
-    if steps > 0:
+    if steps >= 0:
         display_value = goal - steps
         if display_value < 0:
             display_value = 0
