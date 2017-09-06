@@ -101,7 +101,7 @@ if __name__ == "__main__":
         level=logging.DEBUG,
         format='%(asctime)s %(message)s'
     )
-
+    logging.info("File created")
     client = fitbit.Fitbit(
         CONSUMER_KEY,
         CONSUMER_SECRET,
