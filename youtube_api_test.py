@@ -27,7 +27,7 @@ URL = (
 
 def serial_write(serial_client, count):
     """
-        Write steps to serial port
+        Write count to serial port
     """
     message = 'S' + count
     serial_client.write(bytes(message, encoding='utf-8'))
