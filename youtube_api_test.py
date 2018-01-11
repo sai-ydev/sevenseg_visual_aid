@@ -67,12 +67,10 @@ if __name__ == "__main__":
             # update steps every 15 minutes
             if (time.time() - current_time) > 900:
                 count = get_subscriber_count()
-                if count >= 0:
-                    current_time = time.time()
-                    serial_write(serial_port, count)
-                    logging.info("Steps: " + str(count))
-                else:
-                    continue
+                current_time = time.time()
+                serial_write(serial_port, count)
+                logging.info("Steps: " + str(count))
+                
 
             serial_write(serial_port, count)
             time.sleep(1)
