@@ -89,7 +89,7 @@ def serial_write(serial_client, goal, steps):
         Write steps to serial port
     """
     if steps >= 0:
-        display_value = goal - steps -2000
+        display_value = goal - steps
         message = 'S' + str(display_value)
         serial_client.write(bytes(message, encoding='utf-8'))
 
